@@ -1,0 +1,41 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: booking-service
+  r2dbc:
+    url: r2dbc:h2:mem:///bookingdb
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+  h2:
+    console:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
+#    org:
+#      springframework: DEBUG
+#        security: DEBUG
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+
+security:
+  jwt:
+    secret: a-string-secret-at-least-256-bits-long
+    expiration:
+      access: 3600000
+      refresh: 86400000
+
+springdoc:
+  api-docs:
+    path: /bookings/v3/api-docs

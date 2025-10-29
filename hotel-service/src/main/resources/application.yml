@@ -1,0 +1,37 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: hotel-service
+  r2dbc:
+    url: r2dbc:h2:mem:///hoteldb
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+  h2:
+    console:
+      enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+logging:
+  level:
+    root: INFO
+#    org:
+#      springframework: DEBUG
+#        security: DEBUG
+
+security:
+  jwt:
+    secret: a-string-secret-at-least-256-bits-long
+
+springdoc:
+  api-docs:
+    path: /hotels/v3/api-docs

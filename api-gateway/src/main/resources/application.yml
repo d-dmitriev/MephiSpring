@@ -1,0 +1,52 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true # Динамическая маршрутизация по именам сервисов из Eureka
+          routes:
+            - id: booking-service
+              uri: lb://BOOKING-SERVICE # 'lb' для балансировки нагрузки
+              predicates:
+                - Path=/api/auth/**, /api/bookings/**, /api/users/**, /bookings/v3/api-docs/** # Правило для входящих запросов
+              filters:
+                - name: JwtAuthentication
+                # Gateway не проверяет подпись JWT, это делают downstream-сервисы.
+                # Он может извлекать claims и добавлять в заголовки.
+            - id: hotel-service
+              uri: lb://HOTEL-SERVICE
+              predicates:
+                - Path=/api/hotels/**, /api/rooms/**
+              filters:
+                - name: JwtAuthentication
+            - id: hotel-service-internal
+              uri: lb://HOTEL-SERVICE
+              predicates:
+                - Path=/api/rooms/*/confirm-availability, /api/rooms/*/release, /hotels/v3/api-docs/**
+              # Эти эндпойнты вызываются только внутренними сервисами,
+              # аутентификация через shared secret или просто не проверяется.
+              # В прод-среде их нужно защитить.
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+security:
+  jwt:
+    secret: a-string-secret-at-least-256-bits-long
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: booking-service
+        url: /bookings/v3/api-docs
+      - name: hotel-service
+        url: /hotels/v3/api-docs
