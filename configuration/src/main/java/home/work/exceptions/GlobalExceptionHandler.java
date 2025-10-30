@@ -15,6 +15,18 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleValidation(IllegalArgumentException ex, ServerWebExchange exchange) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Validation Failed",
+                ex.getMessage(),
+                exchange.getRequest().getPath().value(),
+                LocalDateTime.now()
+        );
+        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error));
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleBadCredentials(BadCredentialsException ex, ServerWebExchange exchange) {
         ErrorResponse error = new ErrorResponse(

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
@@ -28,6 +30,17 @@ public class BookingController {
     @PreAuthorize("hasRole('USER')")
     public Mono<BookingResponse> createBooking(@AuthenticationPrincipal Jwt jwt,
                                                @RequestBody BookingRequest request) {
+        // Валидация дат
+        if (request.getStartDate() == null || request.getEndDate() == null) {
+            return Mono.error(new IllegalArgumentException("startDate and endDate are required"));
+        }
+        if (!request.getStartDate().isBefore(request.getEndDate())) {
+            return Mono.error(new IllegalArgumentException("startDate must be before endDate"));
+        }
+        if (request.getStartDate().isBefore(LocalDate.now())) {
+            return Mono.error(new IllegalArgumentException("startDate cannot be in the past"));
+        }
+
         return bookingService.createBooking(
                 jwt.getSubject(), request.getRoomId(), request.getStartDate(),
                 request.getEndDate(), request.isAutoSelect(), request.getRequestId()
