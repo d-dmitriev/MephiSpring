@@ -44,6 +44,17 @@ public class BookingService {
         return bookingRepository.findAll().map(this::convertToDto);
     }
 
+    public Flux<BookingResponse> getUserBookings(String userName) {
+        return userRepository
+                .findByUsername(userName)
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
+                .map(User::getId)
+                .flatMapMany(userId ->
+                        bookingRepository.findAllByUserId(userId)
+                                .map(this::convertToDto)
+                );
+    }
+
     public Mono<Void> deleteBooking(Long id) {
         return bookingRepository.deleteById(id);
     }
@@ -71,7 +82,7 @@ public class BookingService {
     private Mono<BookingResponse> proceedWithNewBooking(String userName, Long roomId, LocalDate start, LocalDate end, boolean autoSelect, String requestId) {
         Mono<Long> userIdMono = userRepository
                 .findByUsername(userName)
-                .switchIfEmpty(Mono.error(new UserNotFoundException(0L)))
+                .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .map(User::getId);
 
         if (autoSelect) {
@@ -135,25 +146,6 @@ public class BookingService {
                         .password("system")
                         .authorities("INTERNAL,USER")
                         .build());
-    }
-
-    private Mono<Booking> proceedWithBooking(Long userId, Long roomId, LocalDate start, LocalDate end, String requestId) {
-        log.info("Starting booking creation | requestId={}, userId={}, roomId={}, startDate={}, endDate={}",
-                requestId, userId, roomId, start, end);
-
-        Booking pending = Booking.builder()
-                .userId(userId)
-                .roomId(roomId)
-                .startDate(start)
-                .endDate(end)
-                .status(BookingStatus.PENDING)
-                .createdAt(LocalDate.now())
-                .build();
-
-        return bookingRepository.save(pending)
-                .doOnSuccess(saved -> log.info("Booking saved as PENDING | bookingId={}, requestId={}",
-                        saved.getId(), requestId))
-                .flatMap(saved -> confirmWithHotel(saved, requestId));
     }
 
     private Mono<Booking> confirmWithHotel(Booking booking, String requestId) {

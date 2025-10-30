@@ -26,6 +26,12 @@ public class BookingController {
         return bookingService.getBookings();
     }
 
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('USER')")
+    public Flux<BookingResponse> getUserBookings(@AuthenticationPrincipal Jwt jwt) {
+        return bookingService.getUserBookings(jwt.getSubject());
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public Mono<BookingResponse> createBooking(@AuthenticationPrincipal Jwt jwt,

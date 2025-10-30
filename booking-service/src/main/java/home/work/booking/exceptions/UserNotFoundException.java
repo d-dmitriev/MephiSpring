@@ -1,14 +1,16 @@
 package home.work.booking.exceptions;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserNotFoundException extends RuntimeException {
-    private final Long userId;
+    private Long userId = 0L;
 
     public String getMessage() {
-        return "User not found with id: " + userId;
+        return userId == 0L ? "User not found" :  "User not found with id: " + userId;
     }
 }
