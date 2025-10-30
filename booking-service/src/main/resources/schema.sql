@@ -24,3 +24,9 @@ CREATE TABLE IF NOT EXISTS bookings (
 
 CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_room_dates ON bookings(room_id, start_date, end_date);
+
+CREATE TABLE IF NOT EXISTS processed_requests (
+    request_id VARCHAR(255) PRIMARY KEY,
+    booking_id BIGINT NOT NULL,
+    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

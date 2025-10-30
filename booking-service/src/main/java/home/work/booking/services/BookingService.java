@@ -5,13 +5,16 @@ import home.work.booking.dto.BookingResponse;
 import home.work.booking.dto.RoomRequest;
 import home.work.booking.entities.Booking;
 import home.work.booking.entities.BookingStatus;
+import home.work.booking.entities.User;
 import home.work.booking.exceptions.UserNotFoundException;
 import home.work.booking.repositories.BookingRepository;
+import home.work.booking.repositories.ProcessedRequestRepository;
 import home.work.booking.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -26,6 +29,8 @@ import java.time.LocalDate;
 public class BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final ProcessedRequestRepository processedRequestRepository;
+    private final DatabaseClient databaseClient;
     private final WebClient.Builder webClientBuilder;
     private final JwtService jwtService;
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
@@ -44,17 +49,35 @@ public class BookingService {
 
     public Mono<BookingResponse> createBooking(String userName, Long roomId, LocalDate start, LocalDate end, boolean autoSelect, String requestId) {
         // Идемпотентность: проверяем, не обрабатывали ли уже этот requestId
-        // (можно хранить в отдельной таблице processed_requests)
-        var hotelServiceWebClient = webClientBuilder
-                .baseUrl("http://hotel-service")
-                .build();
+        if (requestId == null || requestId.isBlank()) {
+            return Mono.error(new IllegalArgumentException("requestId is required for idempotency"));
+        }
+        return processedRequestRepository.existsByRequestId(requestId)
+                .flatMap(exists -> {
+                    if (exists) {
+                        // Уже обрабатывали — возвращаем существующее бронирование
+                        return processedRequestRepository.findById(requestId)
+                                .flatMap(pr -> bookingRepository.findById(pr.getBookingId()))
+                                .switchIfEmpty(Mono.error(new RuntimeException("Inconsistent state: processed request without booking")))
+                                .map(this::convertToDto);
+                    }
+
+                    // Новый запрос — продолжаем создание
+                    return proceedWithNewBooking(userName, roomId, start, end, autoSelect, requestId);
+                });
+    }
+
+    private Mono<BookingResponse> proceedWithNewBooking(String userName, Long roomId, LocalDate start, LocalDate end, boolean autoSelect, String requestId) {
+        var hotelServiceWebClient = webClientBuilder.baseUrl("http://hotel-service").build();
+
+        Mono<Long> userIdMono = userRepository
+                .findByUsername(userName)
+                .switchIfEmpty(Mono.error(new UserNotFoundException(0L)))
+                .map(User::getId);
 
         if (autoSelect) {
-            // Запрос к hotel-service за рекомендованным номером
-            return userRepository
-                    .findByUsername(userName)
-                    .switchIfEmpty(Mono.error(new UserNotFoundException(0L)))
-                    .flatMap(user -> hotelServiceWebClient
+            return userIdMono
+                    .flatMap(userId -> hotelServiceWebClient
                             .get()
                             .uri("/api/rooms/recommend?startDate={start}&endDate={end}", start, end)
                             .header("Authorization", "Bearer " + getInternalToken())
@@ -62,16 +85,47 @@ public class BookingService {
                             .bodyToFlux(RoomRequest.class)
                             .next()
                             .switchIfEmpty(Mono.error(new RuntimeException("No available rooms")))
-                            .flatMap(roomDto -> proceedWithBooking(user.getId(), roomDto.getId(), start, end, requestId))
-                    ).map(this::convertToDto);
+                            .flatMap(roomDto -> createAndConfirmBooking(userId, roomDto.getId(), start, end, requestId))
+                    )
+                    .map(this::convertToDto);
         } else {
-            return userRepository
-                    .findByUsername(userName)
-                    .switchIfEmpty(Mono.error(new UserNotFoundException(0L)))
-                    .flatMap(user ->
-                         proceedWithBooking(user.getId(), roomId, start, end, requestId)
-                    ).map(this::convertToDto);
+            return userIdMono
+                    .flatMap(userId -> createAndConfirmBooking(userId, roomId, start, end, requestId))
+                    .map(this::convertToDto);
         }
+    }
+
+    private Mono<Booking> createAndConfirmBooking(Long userId, Long roomId, LocalDate start, LocalDate end, String requestId) {
+        Booking pending = Booking.builder()
+                .userId(userId)
+                .roomId(roomId)
+                .startDate(start)
+                .endDate(end)
+                .status(BookingStatus.PENDING)
+                .createdAt(LocalDate.now())
+                .build();
+
+        return bookingRepository.save(pending)
+                .doOnSuccess(saved -> log.info("Booking saved as PENDING | bookingId={}, requestId={}", saved.getId(), requestId))
+                .flatMap(saved -> confirmWithHotel(saved, requestId))
+                .flatMap(confirmedBooking -> {
+                    // Сохраняем в processed_requests только после успешного подтверждения или отмены
+                    return saveProcessedRequest(requestId, confirmedBooking.getId())
+                            .thenReturn(confirmedBooking);
+                });
+    }
+
+    private Mono<Void> saveProcessedRequest(String requestId, Long bookingId) {
+        String sql = """
+        INSERT INTO processed_requests (request_id, booking_id, processed_at)
+        VALUES (:requestId, :bookingId, CURRENT_TIMESTAMP)
+        """;
+        return databaseClient.sql(sql)
+                .bind("requestId", requestId)
+                .bind("bookingId", bookingId)
+                .fetch()
+                .rowsUpdated()
+                .then();
     }
 
     private String getInternalToken() {
