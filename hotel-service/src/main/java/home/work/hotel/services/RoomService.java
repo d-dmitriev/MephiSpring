@@ -4,6 +4,7 @@ import home.work.hotel.dto.RoomRequest;
 import home.work.hotel.dto.RoomResponse;
 import home.work.hotel.entities.Room;
 import home.work.hotel.exceptions.RoomAlreadyBookedException;
+import home.work.hotel.exceptions.RoomAlreadyExists;
 import home.work.hotel.mappers.RoomMapper;
 import home.work.hotel.repositories.RoomRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,14 @@ public class RoomService {
                         .timesBooked(0)
                         .build()
                 )
+                .onErrorResume(throwable -> {
+                    // Проверяем, не ошибка ли уникальности
+                    if (isUniqueConstraintViolation(throwable)) {
+                        log.warn("Room {} already exists  in hotel {}", room.getNumber(), room.getHotelId());
+                        return Mono.error(new RoomAlreadyExists("Room " +  room.getNumber() + " already exists in hotel " + room.getHotelId()));
+                    }
+                    return Mono.error(throwable);
+                })
                 .map(mapper::toDto);
     }
 

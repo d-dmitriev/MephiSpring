@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS rooms (
     number INT,
     available BOOLEAN DEFAULT TRUE,
     times_booked INT DEFAULT 0,
-    FOREIGN KEY (hotel_id) REFERENCES hotels(id) ON DELETE CASCADE
+    FOREIGN KEY (hotel_id) REFERENCES hotels(id) ON DELETE CASCADE,
+    UNIQUE (hotel_id, number)  -- защита от повторного добавления
 );
 
 CREATE INDEX IF NOT EXISTS idx_rooms_hotel_id ON rooms(hotel_id);
