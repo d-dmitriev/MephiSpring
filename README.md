@@ -17,11 +17,15 @@ REST API для системы бронирования отелей, реали
 ## 📈 Архитектурная диаграмма
 
 ```mermaid
-graph LR
+graph TD
 Client -->|HTTP| Gateway
-Gateway -->|/api/hotels| HotelService
-Gateway -->|/api/bookings| BookingService
-BookingService -->|confirm-availability| HotelService
+Gateway -->|/api/hotels/**| HotelService
+Gateway -->|/api/rooms/**| HotelService
+Gateway -->|/api/auth/**| BookingService
+Gateway -->|/api/bookings/**| BookingService
+Gateway -->|/api/users/**| BookingService
+BookingService -->|/api/rooms/*/confirm-availability| HotelService
+BookingService -->|/api/rooms/*/release| HotelService
 HotelService --> Eureka
 BookingService --> Eureka
 Gateway --> Eureka
