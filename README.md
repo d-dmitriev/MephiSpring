@@ -301,6 +301,7 @@ logging:
 - JWT (jjwt)
 - Eureka, Spring Cloud Gateway
 - Lombok
+- MapStruct
 
 ---
 
