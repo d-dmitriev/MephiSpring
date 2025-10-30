@@ -26,7 +26,7 @@ public class BookingExceptionHandler {
     }
 
     @ExceptionHandler(RoomNotAvailableException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleUserNotFound(RoomNotAvailableException ex, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<ErrorResponse>> handleRoomNotAvailable(RoomNotAvailableException ex, ServerWebExchange exchange) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 "Room Not Found",
