@@ -3,6 +3,7 @@ package home.work.hotel.services;
 import home.work.hotel.dto.HotelRequest;
 import home.work.hotel.dto.HotelResponse;
 import home.work.hotel.entities.Hotel;
+import home.work.hotel.mappers.HotelMapper;
 import home.work.hotel.repositories.HotelRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class HotelService {
     private final HotelRepository hotelRepository;
+    private final HotelMapper mapper;
 
     public Mono<HotelResponse> addHotel(HotelRequest hotel) {
         return hotelRepository.save(Hotel
@@ -22,19 +24,10 @@ public class HotelService {
                         .address(hotel.getAddress())
                         .build()
                 )
-                .map(this::convertToDto);
+                .map(mapper::toDto);
     }
 
     public Flux<HotelResponse> getHotels() {
-        return hotelRepository.findAll().map(this::convertToDto);
-    }
-
-    private HotelResponse convertToDto(Hotel hotel) {
-        return HotelResponse
-                .builder()
-                .id(hotel.getId())
-                .name(hotel.getName())
-                .address(hotel.getAddress())
-                .build();
+        return hotelRepository.findAll().map(mapper::toDto);
     }
 }
