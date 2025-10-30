@@ -1,0 +1,10 @@
+eureka:
+  client:
+    enabled: false
+spring:
+  cloud:
+    discovery:
+      enabled: false
+security:
+  jwt:
+    secret: a-string-secret-at-least-256-bits-long
