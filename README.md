@@ -199,7 +199,7 @@ Content-Type: application/json
 
 ### Доступные интерфейсы
 - **Eureka Dashboard**: http://localhost:8761
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
+- **Swagger UI**: http://localhost:8080/swagger-ui/index.html
 
 ### Логирование
 Для детальной отладки добавьте в `application.yml`:
