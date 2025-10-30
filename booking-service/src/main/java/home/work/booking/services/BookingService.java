@@ -117,9 +117,9 @@ public class BookingService {
 
     private Mono<Void> saveProcessedRequest(String requestId, Long bookingId) {
         String sql = """
-        INSERT INTO processed_requests (request_id, booking_id, processed_at)
-        VALUES (:requestId, :bookingId, CURRENT_TIMESTAMP)
-        """;
+                INSERT INTO processed_requests (request_id, booking_id, processed_at)
+                VALUES (:requestId, :bookingId, CURRENT_TIMESTAMP)
+                """;
         return databaseClient.sql(sql)
                 .bind("requestId", requestId)
                 .bind("bookingId", bookingId)

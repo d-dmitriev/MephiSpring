@@ -27,7 +27,7 @@ public class BookingController {
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public Mono<BookingResponse> createBooking(@AuthenticationPrincipal Jwt jwt,
-                                       @RequestBody BookingRequest request) {
+                                               @RequestBody BookingRequest request) {
         return bookingService.createBooking(
                 jwt.getSubject(), request.getRoomId(), request.getStartDate(),
                 request.getEndDate(), request.isAutoSelect(), request.getRequestId()

@@ -18,13 +18,14 @@ public interface RoomRepository extends ReactiveCrudRepository<Room, Long> {
 
     // Простые методы без сложных параметров
     Flux<Room> findByAvailableTrue();
+
     Flux<Room> findByHotelId(Long hotelId);
 
     @Query("""
-    SELECT r.* FROM rooms r 
-    WHERE r.available = true 
-    AND (:hotelId IS NULL OR r.hotel_id = :hotelId)
-    ORDER BY r.times_booked ASC, r.id ASC
-    """)
+            SELECT r.* FROM rooms r 
+            WHERE r.available = true 
+            AND (:hotelId IS NULL OR r.hotel_id = :hotelId)
+            ORDER BY r.times_booked ASC, r.id ASC
+            """)
     Flux<Room> findRecommendedRooms(@Param("hotelId") Long hotelId);
 }

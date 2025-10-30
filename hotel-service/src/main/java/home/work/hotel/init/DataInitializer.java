@@ -31,8 +31,8 @@ public class DataInitializer {
                 .then(databaseClient.sql("DELETE FROM hotels").fetch().rowsUpdated())
                 .thenMany(
                         Flux.just(
-                                        Hotel.builder().name("Hotel 1").address("Address 1").build(),
-                                        Hotel.builder().name("Hotel 2").address("Address 2").build()
+                                Hotel.builder().name("Hotel 1").address("Address 1").build(),
+                                Hotel.builder().name("Hotel 2").address("Address 2").build()
                         ).flatMap(hotelRepository::save)
                 )
                 .flatMap(hotel -> {

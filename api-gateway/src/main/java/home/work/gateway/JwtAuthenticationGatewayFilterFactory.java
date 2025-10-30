@@ -14,7 +14,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
 
     @Override
     public GatewayFilter apply(Config config) {
-        return (exchange,chain) -> {
+        return (exchange, chain) -> {
             String path = exchange.getRequest().getPath().toString();
 
             // Пропускаем публичные эндпойнты

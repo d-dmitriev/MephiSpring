@@ -45,8 +45,8 @@ public class RoomService {
     public Flux<RoomResponse> getRecommendedRooms(Long hotelId, LocalDate startDate, LocalDate endDate) {
 //        return roomRepository.findByHotelIdAndAvailableTrueOrderByTimesBooked(hotelId)
 //                .map(this::convertToDto);
-            return roomRepository.findRecommendedRooms(hotelId)
-                    .map(this::convertToDto);
+        return roomRepository.findRecommendedRooms(hotelId)
+                .map(this::convertToDto);
     }
 
     public Mono<Boolean> confirmAvailability(Long roomId, LocalDate startDate, LocalDate endDate, String bookingId) {
@@ -84,10 +84,10 @@ public class RoomService {
 
     public Mono<Void> releaseRoom(Long roomId, LocalDate startDate, LocalDate endDate) {
         String sql = """
-        DELETE FROM room_blocked_dates 
-        WHERE room_id = :roomId 
-        AND blocked_date BETWEEN :start AND :end
-        """;
+                DELETE FROM room_blocked_dates 
+                WHERE room_id = :roomId 
+                AND blocked_date BETWEEN :start AND :end
+                """;
         return databaseClient.sql(sql)
                 .bind("roomId", roomId)
                 .bind("start", startDate)
@@ -110,10 +110,10 @@ public class RoomService {
 
     private Mono<Boolean> isRoomAvailableOnDates(Long roomId, LocalDate start, LocalDate end) {
         String sql = """
-        SELECT COUNT(*) as count FROM room_blocked_dates 
-        WHERE room_id = :roomId 
-        AND blocked_date BETWEEN :start AND :end
-        """;
+                SELECT COUNT(*) as count FROM room_blocked_dates 
+                WHERE room_id = :roomId 
+                AND blocked_date BETWEEN :start AND :end
+                """;
         return databaseClient.sql(sql)
                 .bind("roomId", roomId)
                 .bind("start", start)
@@ -132,11 +132,12 @@ public class RoomService {
                 .flatMap(date -> {
                     log.info("Blocking date: {}", date);
                     return databaseClient.sql(
-                                "INSERT INTO room_blocked_dates (room_id, blocked_date) VALUES (:roomId, :date)")
-                        .bind("roomId", roomId)
-                        .bind("date", date)
-                        .fetch()
-                        .rowsUpdated();});
+                                    "INSERT INTO room_blocked_dates (room_id, blocked_date) VALUES (:roomId, :date)")
+                            .bind("roomId", roomId)
+                            .bind("date", date)
+                            .fetch()
+                            .rowsUpdated();
+                });
         return inserts.then();
     }
 }

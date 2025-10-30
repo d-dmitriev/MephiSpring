@@ -16,32 +16,32 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
     Mono<User> findByUsername(String username);
 
     @Query("""
-        SELECT u.id, u.username, u.password,
-               GROUP_CONCAT(ur.role) as roles
-        FROM users u
-        LEFT JOIN user_roles ur ON u.id = ur.user_id
-        WHERE u.id = :id
-        GROUP BY u.id, u.username, u.password
-        """)
+            SELECT u.id, u.username, u.password,
+                   GROUP_CONCAT(ur.role) as roles
+            FROM users u
+            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            WHERE u.id = :id
+            GROUP BY u.id, u.username, u.password
+            """)
     Mono<UserWithRoles> findByIdWithRoles(Long id);
 
     @Query("""
-        SELECT u.id, u.username, u.password,
-               GROUP_CONCAT(ur.role) as roles
-        FROM users u
-        LEFT JOIN user_roles ur ON u.id = ur.user_id
-        WHERE u.username = :username
-        GROUP BY u.id, u.username, u.password
-        """)
+            SELECT u.id, u.username, u.password,
+                   GROUP_CONCAT(ur.role) as roles
+            FROM users u
+            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            WHERE u.username = :username
+            GROUP BY u.id, u.username, u.password
+            """)
     Mono<UserWithRoles> findByUsernameWithRoles(String username);
 
     @Query("""
-        SELECT u.id, u.username, u.password,
-               GROUP_CONCAT(ur.role) as roles
-        FROM users u
-        LEFT JOIN user_roles ur ON u.id = ur.user_id
-        GROUP BY u.id, u.username, u.password
-        """)
+            SELECT u.id, u.username, u.password,
+                   GROUP_CONCAT(ur.role) as roles
+            FROM users u
+            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            GROUP BY u.id, u.username, u.password
+            """)
     Flux<UserWithRoles> findAllWithRoles();
 
     @Data

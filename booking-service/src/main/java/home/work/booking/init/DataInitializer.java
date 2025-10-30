@@ -38,18 +38,18 @@ public class DataInitializer {
                 .then(databaseClient.sql("DELETE FROM users").fetch().rowsUpdated())
                 .thenMany(
                         Flux.just(
-                                    User.builder()
-                                            .username("user@example.com")
-                                            .password(passwordEncoder.encode("password"))
-                                            .build(),
-                                    User.builder()
-                                            .username("admin@example.com")
-                                            .password(passwordEncoder.encode("admin"))
-                                            .build(),
-                                    User.builder()
-                                            .username("manager@example.com")
-                                            .password(passwordEncoder.encode("manager"))
-                                            .build()
+                                        User.builder()
+                                                .username("user@example.com")
+                                                .password(passwordEncoder.encode("password"))
+                                                .build(),
+                                        User.builder()
+                                                .username("admin@example.com")
+                                                .password(passwordEncoder.encode("admin"))
+                                                .build(),
+                                        User.builder()
+                                                .username("manager@example.com")
+                                                .password(passwordEncoder.encode("manager"))
+                                                .build()
                                 )
                                 .flatMap(user ->
                                         userRepository.save(user)

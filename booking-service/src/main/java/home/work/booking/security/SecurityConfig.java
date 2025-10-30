@@ -30,13 +30,13 @@ public class SecurityConfig {
     @Bean
     public ReactiveUserDetailsService userDetailsService() {
         return username ->
-            userRepository.findByUsernameWithRoles(username)
-                    .switchIfEmpty(Mono.error(new UsernameNotFoundException("User not found: " + username)))
-                    .map(user -> User.builder()
-                            .username(user.getUsername())
-                            .password(user.getPassword())
-                            .authorities(user.getRoles())
-                            .build());
+                userRepository.findByUsernameWithRoles(username)
+                        .switchIfEmpty(Mono.error(new UsernameNotFoundException("User not found: " + username)))
+                        .map(user -> User.builder()
+                                .username(user.getUsername())
+                                .password(user.getPassword())
+                                .authorities(user.getRoles())
+                                .build());
     }
 
     @Bean

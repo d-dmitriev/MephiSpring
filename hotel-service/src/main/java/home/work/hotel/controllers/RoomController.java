@@ -49,14 +49,14 @@ public class RoomController {
     @PreAuthorize("hasRole('INTERNAL')")
     @PostMapping("/{id}/confirm-availability")
     public Mono<Boolean> confirmAvailability(@PathVariable Long id,
-                                                       @RequestBody AvailabilityRequest request) {
+                                             @RequestBody AvailabilityRequest request) {
         return roomService.confirmAvailability(id, request.getStartDate(), request.getEndDate(), request.getBookingId());
     }
 
     @PreAuthorize("hasRole('INTERNAL')")
     @PostMapping("/{id}/release")
     public Mono<Void> releaseRoom(@PathVariable Long id,
-                                            @RequestBody AvailabilityRequest request) {
+                                  @RequestBody AvailabilityRequest request) {
         return roomService.releaseRoom(id, request.getStartDate(), request.getEndDate());
     }
 }
