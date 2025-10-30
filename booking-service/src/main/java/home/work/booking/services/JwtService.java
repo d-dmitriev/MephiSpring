@@ -76,7 +76,7 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .decryptWith(JwtSecretKeyProvider.getHmacKey(secret))
+                .verifyWith(JwtSecretKeyProvider.getHmacKey(secret))
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

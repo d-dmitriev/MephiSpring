@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,6 +21,7 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final DatabaseClient databaseClient;
+    private final PasswordEncoder passwordEncoder;
 
     public Mono<UserResponse> get(Long id) {
         return userRepository
@@ -39,7 +40,7 @@ public class UserService {
                     }
 
                     if (updateRequest.getPassword() != null) {
-                        existingUser.setPassword(BCrypt.hashpw(updateRequest.getPassword(), BCrypt.gensalt()));
+                        existingUser.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
                     }
 
                     Mono<Void> rolesUpdateMono = updateRequest.getRoles() != null ?
@@ -72,7 +73,7 @@ public class UserService {
                         userRepository.save(User
                                 .builder()
                                 .username(user.getUsername())
-                                .password(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()))
+                                .password(passwordEncoder.encode(user.getPassword()))
                                 .build()
                         ).flatMap(savedUser ->
                                 saveUserRoles(savedUser.getId(), user.getRoles())
