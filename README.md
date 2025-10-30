@@ -98,6 +98,7 @@ Content-Type: application/json
 - `GET /api/rooms` — список всех свободных номеров
 - `GET /api/rooms/recommend` — рекомендуемые номера
 - `POST /api/bookings` — создать бронирование (`autoSelect: true/false`)
+- `GET /api/bookings/my` — все бронирования пользователя
 - `GET /api/bookings/{id}` — получить бронирование по id
 - `DELETE /api/bookings/{id}` — удалить бронирование по id
 
