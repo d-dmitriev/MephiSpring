@@ -126,6 +126,32 @@ sequenceDiagram
    mvn -pl api-gateway spring-boot:run
    ```
 
+### Альтернативный вариант запуска (без установки в локальный репозиторий)
+
+1. **Сборка проекта**
+   ```bash
+   mvn clean package
+   ```
+   без тестов:
+   ```bash
+   mvn clean package -DskipTests
+   ```
+2. **Запуск сервисов (в указанном порядке):**
+
+   ```bash
+   # 1. Eureka Server (порт 8761)
+   java -jar eureka-server/target/eureka-server-1.0-SNAPSHOT.jar
+
+   # 2. Hotel Service (порт 8081)
+   java -jar hotel-service/target/hotel-service-1.0-SNAPSHOT.jar
+
+   # 3. Booking Service (порт 8082)
+   java -jar booking-service/target/booking-service-1.0-SNAPSHOT.jar
+
+   # 4. API Gateway (порт 8080)
+   java -jar api-gateway/target/api-gateway-1.0-SNAPSHOT.jar
+   ```
+
 > Все сервисы автоматически регистрируются в Eureka и обнаруживают друг друга.
 
 ---

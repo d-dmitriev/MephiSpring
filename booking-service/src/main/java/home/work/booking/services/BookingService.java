@@ -8,6 +8,7 @@ import home.work.booking.entities.BookingStatus;
 import home.work.booking.entities.User;
 import home.work.booking.exceptions.RoomNotAvailableException;
 import home.work.booking.exceptions.UserNotFoundException;
+import home.work.booking.mappers.BookingMapper;
 import home.work.booking.repositories.BookingRepository;
 import home.work.booking.repositories.ProcessedRequestRepository;
 import home.work.booking.repositories.UserRepository;
@@ -34,14 +35,15 @@ public class BookingService {
     private final DatabaseClient databaseClient;
     private final WebClient hotelServiceWebClient;
     private final JwtService jwtService;
+    private final BookingMapper mapper;
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
     public Mono<BookingResponse> getBooking(Long id) {
-        return bookingRepository.findById(id).map(this::convertToDto);
+        return bookingRepository.findById(id).map(mapper::toDto);
     }
 
     public Flux<BookingResponse> getBookings() {
-        return bookingRepository.findAll().map(this::convertToDto);
+        return bookingRepository.findAll().map(mapper::toDto);
     }
 
     public Flux<BookingResponse> getUserBookings(String userName) {
@@ -51,7 +53,7 @@ public class BookingService {
                 .map(User::getId)
                 .flatMapMany(userId ->
                         bookingRepository.findAllByUserId(userId)
-                                .map(this::convertToDto)
+                                .map(mapper::toDto)
                 );
     }
 
@@ -71,7 +73,7 @@ public class BookingService {
                         return processedRequestRepository.findById(requestId)
                                 .flatMap(pr -> bookingRepository.findById(pr.getBookingId()))
                                 .switchIfEmpty(Mono.error(new RuntimeException("Inconsistent state: processed request without booking")))
-                                .map(this::convertToDto);
+                                .map(mapper::toDto);
                     }
 
                     // Новый запрос — продолжаем создание
@@ -97,11 +99,11 @@ public class BookingService {
                             .switchIfEmpty(Mono.error(new RoomNotAvailableException("No available rooms")))
                             .flatMap(roomDto -> createAndConfirmBooking(userId, roomDto.getId(), start, end, requestId))
                     )
-                    .map(this::convertToDto);
+                    .map(mapper::toDto);
         } else {
             return userIdMono
                     .flatMap(userId -> createAndConfirmBooking(userId, roomId, start, end, requestId))
-                    .map(this::convertToDto);
+                    .map(mapper::toDto);
         }
     }
 
@@ -204,18 +206,5 @@ public class BookingService {
                 .retrieve()
                 .toBodilessEntity()
                 .then();
-    }
-
-    private BookingResponse convertToDto(Booking booking) {
-        return BookingResponse
-                .builder()
-                .id(booking.getId())
-                .userId(booking.getUserId())
-                .roomId(booking.getRoomId())
-                .startDate(booking.getStartDate())
-                .endDate(booking.getEndDate())
-                .status(booking.getStatus())
-                .createdAt(booking.getCreatedAt())
-                .build();
     }
 }
