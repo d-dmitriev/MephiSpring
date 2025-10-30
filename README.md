@@ -345,6 +345,7 @@ hotel-booking-platform/
 - `idx_rooms_times_booked` — сортировка по популярности.
 - `idx_blocked_room_date` — проверка доступности на дату.
 - `UNIQUE (room_id, blocked_date)` — предотвращает дублирование блокировок.
+- `UNIQUE (hotel_id, number)` — предотвращает дублирование комнат.
 
 ---
 
