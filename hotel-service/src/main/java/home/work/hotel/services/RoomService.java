@@ -3,6 +3,7 @@ package home.work.hotel.services;
 import home.work.hotel.dto.RoomRequest;
 import home.work.hotel.dto.RoomResponse;
 import home.work.hotel.entities.Room;
+import home.work.hotel.exceptions.RoomAlreadyBookedException;
 import home.work.hotel.repositories.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -79,6 +80,10 @@ public class RoomService {
                                         .then(Mono.just(true));
                             });
                 })
+                .onErrorResume(RoomAlreadyBookedException.class, e -> {
+                    log.warn("Concurrent booking conflict: {}", e.getMessage());
+                    return Mono.just(false);
+                })
                 .defaultIfEmpty(false);
     }
 
@@ -130,14 +135,29 @@ public class RoomService {
         List<LocalDate> dates = start.datesUntil(end.plusDays(1)).toList();
         Flux<?> inserts = Flux.fromIterable(dates)
                 .flatMap(date -> {
-                    log.info("Blocking date: {}", date);
+                    log.info("Blocking date: {} for room: {}, booking: {}", date, roomId, bookingId);
                     return databaseClient.sql(
                                     "INSERT INTO room_blocked_dates (room_id, blocked_date) VALUES (:roomId, :date)")
                             .bind("roomId", roomId)
                             .bind("date", date)
                             .fetch()
-                            .rowsUpdated();
+                            .rowsUpdated()
+                            .onErrorResume(throwable -> {
+                                // Проверяем, не ошибка ли уникальности
+                                if (isUniqueConstraintViolation(throwable)) {
+                                    log.warn("Date {} already blocked for room {}, booking {}", date, roomId, bookingId);
+                                    return Mono.error(new RoomAlreadyBookedException("Date " + date + " already booked"));
+                                }
+                                return Mono.error(throwable);
+                            });
                 });
         return inserts.then();
+    }
+
+    private boolean isUniqueConstraintViolation(Throwable ex) {
+        String msg = ex.getMessage();
+        if (msg == null) return false;
+        // H2: "Unique index or primary key violation"
+        return msg.toLowerCase().contains("unique") || msg.toLowerCase().contains("violation");
     }
 }
