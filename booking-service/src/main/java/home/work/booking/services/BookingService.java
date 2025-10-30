@@ -6,6 +6,7 @@ import home.work.booking.dto.RoomRequest;
 import home.work.booking.entities.Booking;
 import home.work.booking.entities.BookingStatus;
 import home.work.booking.entities.User;
+import home.work.booking.exceptions.RoomNotAvailableException;
 import home.work.booking.exceptions.UserNotFoundException;
 import home.work.booking.repositories.BookingRepository;
 import home.work.booking.repositories.ProcessedRequestRepository;
@@ -82,7 +83,7 @@ public class BookingService {
                             .retrieve()
                             .bodyToFlux(RoomRequest.class)
                             .next()
-                            .switchIfEmpty(Mono.error(new RuntimeException("No available rooms")))
+                            .switchIfEmpty(Mono.error(new RoomNotAvailableException("No available rooms")))
                             .flatMap(roomDto -> createAndConfirmBooking(userId, roomDto.getId(), start, end, requestId))
                     )
                     .map(this::convertToDto);

@@ -45,8 +45,8 @@ public class RoomService {
 
     public Flux<RoomResponse> getRecommendedRooms(Long hotelId, LocalDate startDate, LocalDate endDate) {
 //        return roomRepository.findByHotelIdAndAvailableTrueOrderByTimesBooked(hotelId)
-//                .map(this::convertToDto);
-        return roomRepository.findRecommendedRooms(hotelId)
+//        return roomRepository.findRecommendedRooms(hotelId)
+        return roomRepository.findAvailableAndRecommendedRooms(hotelId, startDate, endDate)
                 .map(this::convertToDto);
     }
 

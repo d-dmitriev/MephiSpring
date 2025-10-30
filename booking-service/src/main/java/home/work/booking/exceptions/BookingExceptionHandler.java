@@ -24,4 +24,16 @@ public class BookingExceptionHandler {
         );
         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
     }
+
+    @ExceptionHandler(RoomNotAvailableException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleUserNotFound(RoomNotAvailableException ex, ServerWebExchange exchange) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Room Not Found",
+                ex.getMessage(),
+                exchange.getRequest().getPath().value(),
+                LocalDateTime.now()
+        );
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
+    }
 }
