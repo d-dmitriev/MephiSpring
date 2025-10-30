@@ -35,3 +35,9 @@ security:
 springdoc:
   api-docs:
     path: /hotels/v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -32,7 +32,7 @@ public class GlobalSecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(
                                 "/api/auth/**",
-                                "/actuator",
+                                "/actuator/**",
                                 "/v3/api-docs/**",
                                 "/hotels/v3/api-docs/**",
                                 "/bookings/v3/api-docs/**",

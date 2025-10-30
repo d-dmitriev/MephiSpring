@@ -50,3 +50,9 @@ springdoc:
         url: /bookings/v3/api-docs
       - name: hotel-service
         url: /hotels/v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
