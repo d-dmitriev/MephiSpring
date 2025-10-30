@@ -4,6 +4,7 @@ import home.work.booking.dto.UserRequest;
 import home.work.booking.dto.UserResponse;
 import home.work.booking.exceptions.UserNotFoundException;
 import home.work.booking.entities.User;
+import home.work.booking.mappers.UserMapper;
 import home.work.booking.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,12 +23,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final DatabaseClient databaseClient;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper mapper;
 
     public Mono<UserResponse> get(Long id) {
         return userRepository
                 .findByIdWithRoles(id)
                 .switchIfEmpty(Mono.error(new UserNotFoundException(id)))
-                .map(this::convertToDto);
+                .map(mapper::toDto);
     }
 
     public Mono<UserResponse> update(Long id, UserRequest updateRequest) {
@@ -50,7 +52,7 @@ public class UserService {
                     return userRepository.save(existingUser)
                             .then(rolesUpdateMono)
                             .then(userRepository.findByIdWithRoles(id))
-                            .map(this::convertToDto);
+                            .map(mapper::toDto);
                 });
     }
 
@@ -109,7 +111,7 @@ public class UserService {
     }
 
     public Flux<UserResponse> getUsers() {
-        return userRepository.findAllWithRoles().map(this::convertToDto);
+        return userRepository.findAllWithRoles().map(mapper::toDto);
     }
 
     private Mono<UserResponse> convertToDto(UserWithRoles user) {
@@ -119,15 +121,6 @@ public class UserService {
                 .username(user.getUser().getUsername())
                 .roles(String.join(",", user.getRoles()))
                 .build());
-    }
-
-    private UserResponse convertToDto(UserRepository.UserWithRoles user) {
-        return UserResponse
-                .builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .roles(user.getRoles())
-                .build();
     }
 
     @Data

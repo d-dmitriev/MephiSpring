@@ -1,8 +1,7 @@
 package home.work.booking.repositories;
 
 import home.work.booking.entities.User;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import home.work.booking.entities.UserWithRoles;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
@@ -43,13 +42,4 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
             GROUP BY u.id, u.username, u.password
             """)
     Flux<UserWithRoles> findAllWithRoles();
-
-    @Data
-    @AllArgsConstructor
-    class UserWithRoles {
-        private Long id;
-        private String username;
-        private String password;
-        private String roles;
-    }
 }
