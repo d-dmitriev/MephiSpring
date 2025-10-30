@@ -4,6 +4,7 @@ import home.work.hotel.dto.RoomRequest;
 import home.work.hotel.dto.RoomResponse;
 import home.work.hotel.entities.Room;
 import home.work.hotel.exceptions.RoomAlreadyBookedException;
+import home.work.hotel.mappers.RoomMapper;
 import home.work.hotel.repositories.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,33 +22,36 @@ import java.util.List;
 public class RoomService {
     private final RoomRepository roomRepository;
     private final DatabaseClient databaseClient;
+    private final RoomMapper mapper;
     private static final Logger log = LoggerFactory.getLogger(RoomService.class);
 
     public Mono<RoomResponse> addRoom(RoomRequest room) {
         return roomRepository.save(Room
                         .builder()
                         .hotelId(room.getHotelId())
+                        .available(true)
                         .number(room.getNumber())
+                        .timesBooked(0)
                         .build()
                 )
-                .map(this::convertToDto);
+                .map(mapper::toDto);
     }
 
     public Flux<RoomResponse> getAvailableRooms() {
         return roomRepository.findByAvailableTrue()
-                .map(this::convertToDto);
+                .map(mapper::toDto);
     }
 
     public Flux<RoomResponse> getRooms() {
         return roomRepository.findAll()
-                .map(this::convertToDto);
+                .map(mapper::toDto);
     }
 
     public Flux<RoomResponse> getRecommendedRooms(Long hotelId, LocalDate startDate, LocalDate endDate) {
 //        return roomRepository.findByHotelIdAndAvailableTrueOrderByTimesBooked(hotelId)
 //        return roomRepository.findRecommendedRooms(hotelId)
         return roomRepository.findAvailableAndRecommendedRooms(hotelId, startDate, endDate)
-                .map(this::convertToDto);
+                .map(mapper::toDto);
     }
 
     public Mono<Boolean> confirmAvailability(Long roomId, LocalDate startDate, LocalDate endDate, String bookingId) {
@@ -101,16 +105,6 @@ public class RoomService {
                 .rowsUpdated()
                 .doOnSuccess(rows -> log.info("Rows deleted: {}", rows))
                 .then();
-    }
-
-    private RoomResponse convertToDto(Room room) {
-        return RoomResponse.builder()
-                .id(room.getId())
-                .hotelId(room.getHotelId())
-                .available(room.getAvailable())
-                .number(room.getNumber())
-                .booked(room.getTimesBooked())
-                .build();
     }
 
     private Mono<Boolean> isRoomAvailableOnDates(Long roomId, LocalDate start, LocalDate end) {
