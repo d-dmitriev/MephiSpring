@@ -199,7 +199,6 @@ Content-Type: application/json
 
 ### Доступные интерфейсы
 - **Eureka Dashboard**: http://localhost:8761
-- **Swagger UI**: http://localhost:8080/swagger-ui/index.html
 
 ### Логирование
 Для детальной отладки добавьте в `application.yml`:
@@ -317,7 +316,7 @@ hotel-booking-platform/
 
 - **Swagger/OpenAPI реализован** с использованием `springdoc-openapi-starter-webflux-ui`.  
   Документация доступна через Gateway:
-    - Общий UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+    - Общий UI: http://localhost:8080/swagger-ui/index.html
     - Спецификации:
         - Booking Service: `/bookings/v3/api-docs`
         - Hotel Service: `/hotels/v3/api-docs`
