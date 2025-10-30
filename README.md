@@ -28,6 +28,10 @@ REST API для системы бронирования отелей, реали
    ```bash
    mvn clean install
    ```
+   без тестов:
+   ```bash
+   mvn clean install -DskipTests
+   ```
 
 2. **Запуск сервисов (в указанном порядке):**
 
