@@ -14,7 +14,7 @@ REST API для системы бронирования отелей, реали
 
 Все сервисы используют **in-memory H2** базу данных и реактивный стек (**WebFlux + R2DBC**).
 
-## 📈 Архитектурная диаграмма
+### 📈 Архитектурная диаграмма
 
 ```mermaid
 graph LR
@@ -29,6 +29,35 @@ BookingService -->|/api/rooms/*/release| HotelService
 HotelService --> Eureka
 BookingService --> Eureka
 Gateway --> Eureka
+```
+
+### 📈 Диаграмма процесса бронирования
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant G as Gateway
+    participant B as Booking Service
+    participant H as Hotel Service
+    participant BD as Booking DB
+    participant HD as Hotel DB
+
+    C->>G: POST /api/bookings
+    G->>B: Прокси запрос + JWT
+    B->>BD: Сохранить бронь как PENDING
+    B->>H: POST /rooms/{id}/confirm-availability
+    H->>HD: Проверить доступность дат
+    H->>HD: Заблокировать даты
+    H->>HD: Увеличить times_booked
+    H-->>B: true (доступно)
+    B->>BD: Обновить статус на CONFIRMED
+    B-->>G: 200 OK
+    G-->>C: Бронирование подтверждено
+    
+    Note over B,H: При ошибке на любом этапе
+    B->>H: POST /rooms/{id}/release
+    H->>HD: Разблокировать даты
+    B->>BD: Обновить статус на CANCELLED
 ```
 
 ---
