@@ -2,12 +2,12 @@ package home.work.booking.services;
 
 import home.work.booking.dto.UserRequest;
 import home.work.booking.dto.UserResponse;
+import home.work.booking.entities.UserWithRoles;
+import home.work.booking.exceptions.UserExistsException;
 import home.work.booking.exceptions.UserNotFoundException;
 import home.work.booking.entities.User;
 import home.work.booking.mappers.UserMapper;
 import home.work.booking.repositories.UserRepository;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -69,7 +69,7 @@ public class UserService {
     public Mono<UserResponse> register(UserRequest user) {
         return userRepository.findByUsername(user.getUsername())
                 .flatMap(existingUser ->
-                        Mono.error(new RuntimeException("User already exists: " + user.getUsername()))
+                        Mono.error(new UserExistsException("User already exists: " + user.getUsername()))
                 )
                 .switchIfEmpty(Mono.defer(() ->
                         userRepository.save(User
@@ -79,9 +79,14 @@ public class UserService {
                                 .build()
                         ).flatMap(savedUser ->
                                 saveUserRoles(savedUser.getId(), user.getRoles())
-                                        .thenReturn(new UserWithRoles(savedUser, user.getRoles()))
+                                        .thenReturn(new UserWithRoles(
+                                                savedUser.getId(),
+                                                savedUser.getUsername(),
+                                                savedUser.getPassword(),
+                                                String.join(",", user.getRoles())
+                                        ))
                         )
-                )).cast(UserWithRoles.class).flatMap(this::convertToDto);
+                )).cast(UserWithRoles.class).map(mapper::toDto);
     }
 
     private Mono<Void> saveUserRoles(Long userId, List<String> roles) {
@@ -112,21 +117,5 @@ public class UserService {
 
     public Flux<UserResponse> getUsers() {
         return userRepository.findAllWithRoles().map(mapper::toDto);
-    }
-
-    private Mono<UserResponse> convertToDto(UserWithRoles user) {
-        return Mono.just(UserResponse
-                .builder()
-                .id(user.getUser().getId())
-                .username(user.getUser().getUsername())
-                .roles(String.join(",", user.getRoles()))
-                .build());
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class UserWithRoles {
-        private User user;
-        private List<String> roles;
     }
 }

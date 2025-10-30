@@ -36,4 +36,16 @@ public class BookingExceptionHandler {
         );
         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
     }
+
+    @ExceptionHandler(UserExistsException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleUserExists(UserExistsException ex, ServerWebExchange exchange) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "User Exists",
+                ex.getMessage(),
+                exchange.getRequest().getPath().value(),
+                LocalDateTime.now()
+        );
+        return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body(error));
+    }
 }

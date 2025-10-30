@@ -16,7 +16,7 @@ public class HotelExceptionHandler {
     @ExceptionHandler(RoomAlreadyExists.class)
     public Mono<ResponseEntity<ErrorResponse>> handleRoomAlreadyExists(RoomAlreadyExists ex, ServerWebExchange exchange) {
         ErrorResponse error = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.CONFLICT.value(),
                 "Room Already Exists",
                 ex.getMessage(),
                 exchange.getRequest().getPath().value(),
