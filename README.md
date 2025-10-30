@@ -14,6 +14,19 @@ REST API для системы бронирования отелей, реали
 
 Все сервисы используют **in-memory H2** базу данных и реактивный стек (**WebFlux + R2DBC**).
 
+## 📈 Архитектурная диаграмма
+
+```mermaid
+graph LR
+Client -->|HTTP| Gateway
+Gateway -->|/api/hotels| HotelService
+Gateway -->|/api/bookings| BookingService
+BookingService -->|confirm-availability| HotelService
+HotelService --> Eureka
+BookingService --> Eureka
+Gateway --> Eureka
+```
+
 ---
 
 ## 🚀 Запуск проекта
@@ -115,6 +128,24 @@ Content-Type: application/json
 - `DELETE /api/users/{id}` — удалить пользователя по id
 
 > Внутренние эндпойнты (`/rooms/*/confirm-availability`, `/release`) защищены ролью `INTERNAL` и вызываются только между сервисами.
+
+---
+
+## 🔍 **Мониторинг и отладка**
+
+### Доступные интерфейсы
+- **Eureka Dashboard**: http://localhost:8761
+- **Swagger UI**: http://localhost:8080/swagger-ui.html
+
+### Логирование
+Для детальной отладки добавьте в `application.yml`:
+```yaml
+logging:
+  level:
+    home.work: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+```
 
 ---
 
