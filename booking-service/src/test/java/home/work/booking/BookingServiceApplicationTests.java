@@ -20,6 +20,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 public class BookingServiceApplicationTests {
@@ -162,5 +164,192 @@ public class BookingServiceApplicationTests {
                 .bodyValue(bookingBody)
                 .exchange()
                 .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void shouldCancelBookingOnHotelServiceFailure() throws Exception {
+        // Мокаем /api/rooms/recommend → возвращаем комнату 1
+        RoomRequest mockRoom = new RoomRequest(2L);
+        String roomJson = new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(mockRoom);
+
+        mockHotelService.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(roomJson));
+
+        // Мокаем /confirm-availability → (ошибка)
+        mockHotelService.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("false"));
+
+        // Получаем токен
+        String token = obtainAccessToken("user@example.com", "password");
+
+        // Создаём бронирование
+        String bookingBody = """
+                {
+                  "roomId": "1",
+                  "startDate": "2026-02-01",
+                  "endDate": "2026-02-03",
+                  "autoSelect": true,
+                  "requestId": "1"
+                }
+                """;
+
+        webTestClient
+                .post().uri("/api/bookings")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(bookingBody)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo("CANCELLED");
+    }
+
+    @Test
+    void shouldHandleIdempotencyWithSameRequestId() throws Exception {
+        // Мокаем /recommend → комната 1
+        RoomRequest mockRoom = new RoomRequest(1L);
+        String roomJson = new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(mockRoom);
+        mockHotelService.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(roomJson));
+        mockHotelService.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("true")); // confirm
+
+        String token = obtainAccessToken("user@example.com", "password");
+        String bookingBody = """
+                {
+                  "startDate": "2026-03-01",
+                  "endDate": "2026-03-03",
+                  "autoSelect": true,
+                  "requestId": "idempotent-1"
+                }
+                """;
+
+        // Первый запрос
+        String firstResponse = webTestClient
+                .post().uri("/api/bookings")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(bookingBody)
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(String.class)
+                .getResponseBody()
+                .blockFirst();
+
+        // Второй запрос с тем же requestId
+        String secondResponse = webTestClient
+                .post().uri("/api/bookings")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(bookingBody)
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(String.class)
+                .getResponseBody()
+                .blockFirst();
+
+        // Ответы должны быть идентичны
+        assertEquals(firstResponse, secondResponse);
+
+        // Hotel Service должен быть вызван только один раз (только при первом запросе)
+        assertEquals(2, mockHotelService.getRequestCount()); // recommend + confirm
+    }
+
+    @Test
+    void shouldFailSecondBookingOnSameDates() throws Exception {
+        // Первое бронирование: успешно
+        RoomRequest mockRoom = new RoomRequest(1L);
+        String roomJson = new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(mockRoom);
+        mockHotelService.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(roomJson));
+        mockHotelService.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("true")); // confirm OK
+
+        String token = obtainAccessToken("user@example.com", "password");
+        String bookingBody1 = """
+                {
+                  "roomId": "1",
+                  "startDate": "2026-04-01",
+                  "endDate": "2026-04-03",
+                  "autoSelect": false,
+                  "requestId": "first-booking"
+                }
+                """;
+
+        webTestClient
+                .post().uri("/api/bookings")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(bookingBody1)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo("CONFIRMED");
+
+        // Второе бронирование на те же даты → Hotel Service вернёт false
+        mockHotelService.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(roomJson)); // recommend
+        mockHotelService.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("false")); // confirm → недоступно!
+
+        // Мокаем /release → должен быть вызван
+        mockHotelService.enqueue(new MockResponse()
+                .setResponseCode(200));
+
+        String bookingBody2 = """
+                {
+                  "roomId": "1",
+                  "startDate": "2026-04-01",
+                  "endDate": "2026-04-03",
+                  "autoSelect": false,
+                  "requestId": "second-booking"
+                }
+                """;
+
+        webTestClient
+                .post().uri("/api/bookings")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(bookingBody2)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo("CANCELLED");
+    }
+
+    private String obtainAccessToken(String username, String password) {
+        String authBody = String.format("""
+                {
+                  "username": "%s",
+                  "password": "%s"
+                }
+                """, username, password);
+
+        String tokenResponse = webTestClient
+                .post().uri("/api/auth")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authBody)
+                .exchange()
+                .returnResult(String.class)
+                .getResponseBody()
+                .blockFirst();
+
+        return tokenResponse.split("\"accessToken\":\"")[1].split("\"")[0];
     }
 }
