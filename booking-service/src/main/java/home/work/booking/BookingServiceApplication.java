@@ -16,10 +16,15 @@ public class BookingServiceApplication {
         SpringApplication.run(BookingServiceApplication.class, args);
     }
 
-    @LoadBalanced
     @Bean
-    public WebClient.Builder webClientBuilder() {
+    @LoadBalanced
+    public WebClient.Builder loadBalancedWebClientBuilder() {
         return WebClient.builder();
+    }
+
+    @Bean
+    public WebClient hotelServiceWebClient(WebClient.Builder builder) {
+        return builder.baseUrl("http://hotel-service").build();
     }
 }
 

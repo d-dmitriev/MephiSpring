@@ -31,7 +31,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final ProcessedRequestRepository processedRequestRepository;
     private final DatabaseClient databaseClient;
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient hotelServiceWebClient;
     private final JwtService jwtService;
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
@@ -68,8 +68,6 @@ public class BookingService {
     }
 
     private Mono<BookingResponse> proceedWithNewBooking(String userName, Long roomId, LocalDate start, LocalDate end, boolean autoSelect, String requestId) {
-        var hotelServiceWebClient = webClientBuilder.baseUrl("http://hotel-service").build();
-
         Mono<Long> userIdMono = userRepository
                 .findByUsername(userName)
                 .switchIfEmpty(Mono.error(new UserNotFoundException(0L)))
@@ -168,10 +166,6 @@ public class BookingService {
                 .requestId(requestId)
                 .build();
 
-        var hotelServiceWebClient = webClientBuilder
-                .baseUrl("http://hotel-service")
-                .build();
-
         return hotelServiceWebClient
                 .post()
                 .uri("/api/rooms/{id}/confirm-availability", booking.getRoomId())
@@ -206,10 +200,6 @@ public class BookingService {
         AvailabilityRequest req = AvailabilityRequest.builder()
                 .startDate(start)
                 .endDate(end)
-                .build();
-
-        var hotelServiceWebClient = webClientBuilder
-                .baseUrl("http://hotel-service")
                 .build();
 
         return hotelServiceWebClient
