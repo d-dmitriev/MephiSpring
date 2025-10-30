@@ -17,7 +17,7 @@ REST API для системы бронирования отелей, реали
 ## 📈 Архитектурная диаграмма
 
 ```mermaid
-graph TD
+graph LR
 Client -->|HTTP| Gateway
 Gateway -->|/api/hotels/**| HotelService
 Gateway -->|/api/rooms/**| HotelService
