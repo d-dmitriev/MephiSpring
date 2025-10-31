@@ -48,4 +48,16 @@ public class BookingExceptionHandler {
         );
         return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body(error));
     }
+
+    @ExceptionHandler(RequestProcessedException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleUserExists(RequestProcessedException ex, ServerWebExchange exchange) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.OK.value(),
+                "Request Processed",
+                ex.getMessage(),
+                exchange.getRequest().getPath().value(),
+                LocalDateTime.now()
+        );
+        return Mono.just(ResponseEntity.status(HttpStatus.OK).body(error));
+    }
 }

@@ -19,6 +19,8 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.util.List;
 
+import static home.work.exceptions.ExceptionProcessor.isUniqueConstraintViolation;
+
 @Service
 @RequiredArgsConstructor
 public class RoomService {
@@ -157,12 +159,5 @@ public class RoomService {
                             });
                 });
         return inserts.as(transactionalOperator::transactional).then();
-    }
-
-    private boolean isUniqueConstraintViolation(Throwable ex) {
-        String msg = ex.getMessage();
-        if (msg == null) return false;
-        // H2: "Unique index or primary key violation"
-        return msg.toLowerCase().contains("unique") || msg.toLowerCase().contains("violation");
     }
 }

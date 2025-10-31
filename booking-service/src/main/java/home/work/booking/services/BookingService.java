@@ -6,6 +6,7 @@ import home.work.booking.dto.RoomRequest;
 import home.work.booking.entities.Booking;
 import home.work.booking.entities.BookingStatus;
 import home.work.booking.entities.User;
+import home.work.booking.exceptions.RequestProcessedException;
 import home.work.booking.exceptions.RoomNotAvailableException;
 import home.work.booking.exceptions.UserNotFoundException;
 import home.work.booking.mappers.BookingMapper;
@@ -25,6 +26,8 @@ import reactor.util.retry.Retry;
 
 import java.time.Duration;
 import java.time.LocalDate;
+
+import static home.work.exceptions.ExceptionProcessor.isUniqueConstraintViolation;
 
 @Service
 @RequiredArgsConstructor
@@ -138,6 +141,14 @@ public class BookingService {
                 .bind("bookingId", bookingId)
                 .fetch()
                 .rowsUpdated()
+                .onErrorResume(throwable -> {
+                    if (isUniqueConstraintViolation(throwable)) {
+                        log.warn("Request {} already processed", requestId);
+                        return Mono.error(new RequestProcessedException("Request " + requestId + " already processed"));
+                    }
+                    return Mono.error(throwable);
+
+                })
                 .then();
     }
 
