@@ -15,7 +15,7 @@ public interface RoomRepository extends ReactiveCrudRepository<Room, Long> {
     Flux<Room> findByHotelIdAndAvailableTrueOrderByTimesBooked(Long hotelId);
 
     // Или добавьте @Query аннотацию для кастомного запроса
-    @Query("SELECT * FROM room WHERE hotel_id = :hotelId AND available = true")
+    @Query("SELECT * FROM rooms WHERE hotel_id = :hotelId AND available = true")
     Flux<Room> findAvailableRoomsByHotelId(Long hotelId);
 
     // Простые методы без сложных параметров
