@@ -23,13 +23,14 @@ spring:
             - id: hotel-service
               uri: lb://HOTEL-SERVICE
               predicates:
-                - Path=/api/hotels/**, /api/rooms/**
+                - Path=/api/hotels/**, /api/rooms, /api/rooms/all, /api/rooms/recommend, /hotels/v3/api-docs/**
               filters:
                 - name: JwtAuthentication
             - id: hotel-service-internal
               uri: lb://HOTEL-SERVICE
               predicates:
-                - Path=/api/rooms/*/confirm-availability, /api/rooms/*/release, /hotels/v3/api-docs/**
+                - Path=/api/rooms/*/confirm-availability, /api/rooms/*/release
+                - Header=X-Api-Key
               # Эти эндпойнты вызываются только внутренними сервисами,
               # аутентификация через shared secret или просто не проверяется.
               # В прод-среде их нужно защитить.
