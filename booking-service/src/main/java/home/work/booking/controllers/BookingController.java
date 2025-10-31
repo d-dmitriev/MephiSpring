@@ -28,8 +28,16 @@ public class BookingController {
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('USER')")
-    public Flux<BookingResponse> getUserBookings(@AuthenticationPrincipal Jwt jwt) {
-        return bookingService.getUserBookings(jwt.getSubject());
+    public Flux<BookingResponse> getUserBookings(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        if (page < 0 || size <= 0 || size > 100) {
+            return Flux.error(new IllegalArgumentException("Invalid page or size"));
+        }
+
+        return bookingService.getUserBookingsWithPagination(jwt.getSubject(), page, size);
     }
 
     @PostMapping

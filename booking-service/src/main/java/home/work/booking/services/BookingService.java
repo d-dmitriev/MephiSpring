@@ -47,13 +47,13 @@ public class BookingService {
         return bookingRepository.findAll().map(mapper::toDto);
     }
 
-    public Flux<BookingResponse> getUserBookings(String userName) {
+    public Flux<BookingResponse> getUserBookingsWithPagination(String userName, int page, int size) {
         return userRepository
                 .findByUsername(userName)
                 .switchIfEmpty(Mono.error(new UserNotFoundException()))
                 .map(User::getId)
                 .flatMapMany(userId ->
-                        bookingRepository.findAllByUserId(userId)
+                        bookingRepository.findAllByUserIdWithPagination(userId, size, page * size)
                                 .map(mapper::toDto)
                 );
     }
