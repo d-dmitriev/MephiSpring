@@ -351,6 +351,21 @@ hotel-booking-platform/
 
 ## 📝 Примечания
 
+- **Консоль H2** включена для Hotel Service и Booking Service (на произвольном порту).
+  Нужно найти в логах запись вида:
+  ```
+  H2 Web Console server running at http://localhost:52361 (only local connections)
+  ```
+  #### Строка подключения (JDBC URL):
+  ##### для Booking Service
+  ```
+  jdbc:h2:mem:bookingdb
+  ```
+  #####  для Hotel Service:
+  ```
+  jdbc:h2:mem:hoteldb
+  ```
+
 - **Swagger/OpenAPI реализован** с использованием `springdoc-openapi-starter-webflux-ui`.  
   Документация доступна через Gateway:
     - Общий UI: http://localhost:8080/swagger-ui/index.html
