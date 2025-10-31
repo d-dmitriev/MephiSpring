@@ -11,12 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 
@@ -30,17 +26,6 @@ public class BookingServiceApplicationTests {
     private WebTestClient webTestClient;
 
     private MockWebServer mockHotelService;
-
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        @Primary
-        public WebClient hotelServiceWebClientForTests() {
-            return WebClient.builder()
-                    .baseUrl("http://localhost:" + System.getProperty("mock.hotel.service.port", "9090"))
-                    .build();
-        }
-    }
 
     @BeforeEach
     void setUp() throws IOException {
