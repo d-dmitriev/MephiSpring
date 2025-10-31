@@ -29,6 +29,8 @@ import java.time.LocalDate;
 @Service
 @RequiredArgsConstructor
 public class BookingService {
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
+
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final ProcessedRequestRepository processedRequestRepository;
@@ -36,7 +38,6 @@ public class BookingService {
     private final WebClient hotelServiceWebClient;
     private final JwtService jwtService;
     private final BookingMapper mapper;
-    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
     public Mono<BookingResponse> getBooking(Long id) {
         return bookingRepository.findById(id).map(mapper::toDto);

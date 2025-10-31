@@ -32,18 +32,18 @@ public interface RoomRepository extends ReactiveCrudRepository<Room, Long> {
     Flux<Room> findRecommendedRooms(@Param("hotelId") Long hotelId);
 
     @Query("""
-    SELECT r.*
-    FROM rooms r
-    WHERE r.available = true
-      AND (:hotelId IS NULL OR r.hotel_id = :hotelId)
-      AND NOT EXISTS (
-          SELECT 1
-          FROM room_blocked_dates b
-          WHERE b.room_id = r.id
-            AND b.blocked_date BETWEEN :startDate AND :endDate
-      )
-    ORDER BY r.times_booked ASC, r.id ASC
-    """)
+            SELECT r.*
+            FROM rooms r
+            WHERE r.available = true
+              AND (:hotelId IS NULL OR r.hotel_id = :hotelId)
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM room_blocked_dates b
+                  WHERE b.room_id = r.id
+                    AND b.blocked_date BETWEEN :startDate AND :endDate
+              )
+            ORDER BY r.times_booked ASC, r.id ASC
+            """)
     Flux<Room> findAvailableAndRecommendedRooms(
             @Param("hotelId") Long hotelId,
             @Param("startDate") LocalDate startDate,
