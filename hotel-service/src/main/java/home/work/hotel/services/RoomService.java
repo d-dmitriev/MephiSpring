@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -23,6 +24,7 @@ import java.util.List;
 public class RoomService {
     private final RoomRepository roomRepository;
     private final DatabaseClient databaseClient;
+    private final TransactionalOperator transactionalOperator;
     private final RoomMapper mapper;
     private static final Logger log = LoggerFactory.getLogger(RoomService.class);
 
@@ -154,7 +156,7 @@ public class RoomService {
                                 return Mono.error(throwable);
                             });
                 });
-        return inserts.then();
+        return inserts.as(transactionalOperator::transactional).then();
     }
 
     private boolean isUniqueConstraintViolation(Throwable ex) {
