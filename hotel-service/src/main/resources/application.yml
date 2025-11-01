@@ -2,6 +2,8 @@ server:
   port: 8081
 
 spring:
+  config:
+    import: "classpath:application-common.yml"
   application:
     name: hotel-service
   r2dbc:

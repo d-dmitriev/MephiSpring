@@ -1,0 +1,15 @@
+info:
+  env:
+    java:
+      vendor: ${java.vendor}
+      vm-name: ${java.vm.name}
+      runtime-version: ${java.runtime.version}
+    os:
+      name: ${os.name}
+      version: ${os.version}
+      arch: ${os.arch}
+
+management:
+  info:
+    env:
+      enabled: true
